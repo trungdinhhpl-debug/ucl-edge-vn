@@ -12,7 +12,7 @@ from .players import Player, fit_and_apply, parse_players
 from .teams import Team, build_matches, build_teams
 from .xp import Fixture, expected_points, player_distribution
 
-OUT_DIR = pathlib.Path(__file__).resolve().parents[2] / "frontend" / "public" / "data"
+OUT_DIR = pathlib.Path(__file__).resolve().parents[2] / "public" / "data"
 
 
 def _round(x: float, n: int = 3) -> float:

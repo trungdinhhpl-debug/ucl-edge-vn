@@ -47,8 +47,8 @@ lệ sở hữu là bằng chứng cầu thủ hay, không khẳng định chắ
 
 ```
 Feed công khai UEFA ──► pipeline Python ──► JSON tĩnh ──► Next.js (chạy tĩnh)
- gaming.uefa.com          sức mạnh đội          frontend/       bộ tối ưu MILP-thay-thế
- comp.uefa.com            Poisson theo trận     public/data/    chạy bằng TypeScript
+ gaming.uefa.com          sức mạnh đội          public/data/    bộ tối ưu MILP-thay-thế
+ comp.uefa.com            Poisson theo trận                     chạy bằng TypeScript
                           xMins + tỷ lệ Bayes                   ngay trong trình duyệt
                           tích chập phân phối
 ```
@@ -71,7 +71,7 @@ pip install -r pipeline/requirements.txt
 python -m pipeline.run
 ```
 
-Lệnh này tải feed UEFA về `data/raw/` rồi ghi `frontend/public/data/{players,teams,meta}.json`.
+Lệnh này tải feed UEFA về `data/raw/` rồi ghi `public/data/{players,teams,meta}.json`.
 Mất khoảng 10 giây. Chạy lại với `--cached` để dùng feed đã tải (không cần mạng):
 
 ```bash
@@ -81,7 +81,6 @@ python -m pipeline.run --cached
 ### 2) Chạy web
 
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
@@ -98,35 +97,32 @@ python -m pipeline.tests.test_xp
 
 ## Triển khai (GitHub + Vercel)
 
-1. Tạo repo rỗng `ucl-edge-vn` trên GitHub (**không** thêm README/.gitignore), rồi:
+Ứng dụng Next.js nằm ngay ở **thư mục gốc repo**, nên Vercel tự nhận diện và không cần
+cấu hình gì:
+
+1. Đẩy code lên GitHub:
 
    ```bash
    git push -u origin main
    ```
 
-2. Vào <https://vercel.com/new>, chọn repo vừa tạo. Chỉ có **một** thiết lập bắt buộc:
-
-   | Thiết lập | Giá trị |
-   |---|---|
-   | **Root Directory** | `frontend` |
-   | Framework | Next.js (tự nhận) |
-   | Build / Install command | để mặc định |
-
-   Ứng dụng Next.js nằm trong thư mục con nên nếu bỏ qua bước Root Directory, Vercel sẽ
-   báo không tìm thấy `package.json`.
+2. Vào <https://vercel.com/new>, chọn repo, bấm **Deploy**. Không đụng vào Root
+   Directory, Build Command hay Environment Variables — để nguyên mặc định.
 
 3. Bật quyền ghi cho GitHub Actions: **Settings → Actions → General → Workflow
    permissions → Read and write permissions**. Repo mới mặc định chỉ cho đọc, khi đó
-   cron làm mới dữ liệu sẽ chạy nhưng **không đẩy được commit lên** và im lặng thất bại
+   cron làm mới dữ liệu vẫn chạy nhưng **không đẩy được commit lên** và thất bại lặng lẽ
    ở bước cuối.
 
 Sau đó mỗi lần cron ([.github/workflows/refresh-data.yml](.github/workflows/refresh-data.yml))
-chạy, nó commit JSON mới vào `frontend/public/data` và Vercel tự deploy lại.
+chạy, nó commit JSON mới vào `public/data` và Vercel tự deploy lại.
+
+> Pipeline Python và app Next.js dùng chung một thư mục gốc. Đây là chủ ý: Vercel deploy
+> repo con rất hay vấp ở thiết lập Root Directory, còn để phẳng thế này thì import xong
+> bấm Deploy là xong.
 
 > Feed thô trong `data/raw/` **không** được đưa vào git (2,4 MB mỗi lần chạy). Muốn dựng
-> lại dữ liệu offline thì chạy `python -m pipeline.run` để tải mới.
-
----
+> lại dữ liệu thì chạy `python -m pipeline.run` để tải mới.
 
 ## Ghi chú kỹ thuật đáng nhớ
 
