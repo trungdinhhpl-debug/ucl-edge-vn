@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 40% 98%;
+  --foreground: 226 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 226 47% 11%;
+  --muted: 220 32% 94%;
+  --muted-foreground: 220 12% 44%;
+  --primary: 232 74% 34%;           /* xanh navy Champions League */
+  --primary-foreground: 0 0% 100%;
+  --accent: 264 70% 52%;            /* tím starball */
+  --accent-foreground: 0 0% 100%;
+  --border: 220 24% 88%;
+  --input: 220 24% 88%;
+  --ring: 232 74% 44%;
+  --radius: 0.7rem;
+
+  --positive: 152 58% 36%;
+  --caution: 38 92% 46%;
+  --danger: 0 72% 50%;
+  --neutralq: 220 12% 52%;
+}
+
+.dark {
+  --background: 226 45% 7%;
+  --foreground: 220 34% 96%;
+  --card: 226 40% 10%;
+  --card-foreground: 220 34% 96%;
+  --muted: 225 30% 16%;
+  --muted-foreground: 220 16% 66%;
+  --primary: 226 82% 62%;
+  --primary-foreground: 226 45% 7%;
+  --accent: 268 78% 68%;
+  --accent-foreground: 226 45% 7%;
+  --border: 225 26% 20%;
+  --input: 225 26% 22%;
+  --ring: 226 82% 62%;
+
+  --positive: 152 52% 50%;
+  --caution: 38 92% 58%;
+  --danger: 0 72% 62%;
+  --neutralq: 220 12% 56%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+}
+
+.scroll-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
+
+/* thang độ khó lịch thi đấu: 1 = thuận lợi nhất */
+.fdr-1 { background: hsl(152 58% 40%); color: #fff; }
+.fdr-2 { background: hsl(120 42% 54%); color: #06240f; }
+.fdr-3 { background: hsl(48 88% 58%); color: #3a2c00; }
+.fdr-4 { background: hsl(18 84% 57%); color: #fff; }
+.fdr-5 { background: hsl(0 70% 51%); color: #fff; }
+
+/* sân bóng cho trang chọn đội hình */
+.pitch {
+  background:
+    linear-gradient(hsl(var(--primary) / 0.10), hsl(var(--primary) / 0.02)),
+    repeating-linear-gradient(
+      to bottom,
+      hsl(var(--primary) / 0.05) 0 40px,
+      transparent 40px 80px
+    );
+}
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+.live-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none !important; }
+}

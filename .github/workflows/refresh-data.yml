@@ -1,0 +1,42 @@
+name: Làm mới dữ liệu UCL
+
+# Feed của UEFA đổi chậm (giá, tỷ lệ sở hữu, chấn thương), nên chạy vài lần mỗi ngày
+# là đủ. Giờ trong cron là UTC; 22:00 UTC = 05:00 sáng hôm sau giờ VN.
+on:
+  schedule:
+    - cron: "0 1,7,13,19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cài thư viện
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Tải feed và dựng lại dữ liệu
+        run: python -m pipeline.run
+
+      - name: Kiểm tra phần toán tính điểm
+        run: python -m pipeline.tests.test_xp
+
+      - name: Đẩy dữ liệu mới lên nhánh chính
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/data
+          if git diff --staged --quiet; then
+            echo "Dữ liệu không đổi, bỏ qua commit."
+          else
+            git commit -m "chore(data): làm mới dữ liệu UCL Fantasy $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi

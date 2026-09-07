@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Môi trường
+.env*.local
+
+# Feed thô tải về chỉ để chạy lại offline — không đưa vào git, mỗi lần cron chạy
+# sẽ thêm vài MB vào lịch sử repo mà không đem lại giá trị gì.
+data/raw/
