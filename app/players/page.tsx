@@ -15,6 +15,7 @@ import {
   RiskBadge,
   SectionTitle,
   Select,
+  SortableTh,
   Spinner,
 } from "@/components/ui";
 import {
@@ -23,21 +24,50 @@ import {
   isSelectable,
   riskLabel,
   useDataset,
+  type Dataset,
   type Player,
   type Pos,
 } from "@/lib/data";
 import { money, num, pct } from "@/lib/format";
+import { compare, useSort, type SortDir } from "@/lib/sort";
 
-type SortKey = "xpNow" | "xpHorizon" | "valueNow" | "price" | "xMins" | "ownership" | "ptsPrev";
+type SortKey =
+  | "name"
+  | "opponent"
+  | "price"
+  | "xMins"
+  | "xpNow"
+  | "xpHorizon"
+  | "valueNow"
+  | "haul"
+  | "ownership"
+  | "ptsPrev";
+
+/** Chiều mặc định khi bấm lần đầu vào một cột: cột chữ A→Z, cột số cao→thấp. */
+const SORT_DIR: Record<SortKey, SortDir> = {
+  name: "asc",
+  opponent: "asc",
+  price: "desc",
+  xMins: "desc",
+  xpNow: "desc",
+  xpHorizon: "desc",
+  valueNow: "desc",
+  haul: "desc",
+  ownership: "desc",
+  ptsPrev: "desc",
+};
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "xpNow", label: "xP lượt tới" },
   { key: "xpHorizon", label: "xP cả vòng bảng" },
   { key: "valueNow", label: "xP trên mỗi triệu" },
+  { key: "haul", label: "Xác suất bùng nổ" },
   { key: "xMins", label: "Số phút kỳ vọng" },
   { key: "price", label: "Giá" },
   { key: "ownership", label: "Tỷ lệ sở hữu" },
   { key: "ptsPrev", label: "Điểm mùa 2025/26" },
+  { key: "name", label: "Tên cầu thủ" },
+  { key: "opponent", label: "Đối thủ" },
 ];
 
 const BREAKDOWN_VI: Record<string, string> = {
@@ -66,7 +96,7 @@ export default function PlayersPage() {
   const [team, setTeam] = useState<"all" | number>("all");
   const [maxPrice, setMaxPrice] = useState(13);
   const [minMins, setMinMins] = useState(0);
-  const [sort, setSort] = useState<SortKey>("xpNow");
+  const sort = useSort<SortKey>("xpNow", "desc");
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [detail, setDetail] = useState<Player | null>(null);
 
@@ -84,9 +114,11 @@ export default function PlayersPage() {
             (data.teamById.get(p.team)?.name ?? "").toLowerCase().includes(q.toLowerCase())
           : true,
       )
-      .sort((a, b) => (b[sort] as number) - (a[sort] as number))
+      .sort((a, b) =>
+        compare(sortValue(a, sort.key, data), sortValue(b, sort.key, data), sort.dir),
+      )
       .slice(0, 200);
-  }, [data, q, pos, team, maxPrice, minMins, sort, onlyAvailable]);
+  }, [data, q, pos, team, maxPrice, minMins, sort.key, sort.dir, onlyAvailable]);
 
   if (loading) return <Spinner />;
   if (error) return <ErrorBox error={error} />;
@@ -131,7 +163,13 @@ export default function PlayersPage() {
                 </option>
               ))}
           </Select>
-          <Select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+          <Select
+            value={sort.key}
+            onChange={(e) => {
+              const k = e.target.value as SortKey;
+              sort.select(k, SORT_DIR[k]);
+            }}
+          >
             {SORTS.map((s) => (
               <option key={s.key} value={s.key}>
                 Sắp theo: {s.label}
@@ -180,15 +218,15 @@ export default function PlayersPage() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
               <tr>
-                <th className="p-2.5 font-medium">Cầu thủ</th>
-                <th className="p-2.5 font-medium">Đối thủ</th>
-                <th className="p-2.5 text-right font-medium">Giá</th>
-                <th className="p-2.5 text-right font-medium">xPhút</th>
-                <th className="p-2.5 text-right font-medium">xP L{meta.currentMd}</th>
-                <th className="p-2.5 text-right font-medium">xP vòng bảng</th>
-                <th className="p-2.5 text-right font-medium">xP/€m</th>
-                <th className="p-2.5 text-right font-medium">P(≥10)</th>
-                <th className="p-2.5 text-right font-medium">Sở hữu</th>
+                <SortableTh label="Cầu thủ" sortKey="name" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} defaultDir="asc" />
+                <SortableTh label="Đối thủ" sortKey="opponent" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} defaultDir="asc" />
+                <SortableTh label="Giá" sortKey="price" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" />
+                <SortableTh label="xPhút" sortKey="xMins" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" title="Số phút kỳ vọng ở lượt tới" />
+                <SortableTh label={`xP L${meta.currentMd}`} sortKey="xpNow" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" />
+                <SortableTh label="xP vòng bảng" sortKey="xpHorizon" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" />
+                <SortableTh label="xP/€m" sortKey="valueNow" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" />
+                <SortableTh label="P(≥10)" sortKey="haul" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" title="Xác suất được từ 10 điểm trở lên" />
+                <SortableTh label="Sở hữu" sortKey="ownership" activeKey={sort.key} dir={sort.dir} onSort={sort.toggle} align="right" />
               </tr>
             </thead>
             <tbody>
@@ -376,6 +414,20 @@ export default function PlayersPage() {
       )}
     </div>
   );
+}
+
+/** Giá trị dùng để so sánh cho từng cột — cột nào không phải trường thẳng thì quy đổi ở đây. */
+function sortValue(p: Player, key: SortKey, data: Dataset): number | string | null {
+  switch (key) {
+    case "name":
+      return p.fullName;
+    case "opponent":
+      return p.opponent ? (data.teamById.get(p.opponent)?.short ?? null) : null;
+    case "haul":
+      return p.dist ? p.dist.p_haul : null;
+    default:
+      return p[key];
+  }
 }
 
 function Row({ label, value }: { label: string; value: string }) {

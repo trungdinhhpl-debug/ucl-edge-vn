@@ -1,4 +1,7 @@
 import * as React from "react";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+
+import type { SortDir } from "@/lib/sort";
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) {
@@ -189,4 +192,63 @@ export function RiskBadge({ text, tone }: { text: string; tone: "ok" | "warn" | 
         ? "bg-caution/20 text-caution"
         : "bg-positive/15 text-positive";
   return <Badge className={cls}>{text}</Badge>;
+}
+
+
+/** Tiêu đề cột bấm được để sắp xếp, kèm mũi tên chỉ chiều đang áp dụng. */
+export function SortableTh<K extends string>({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+  defaultDir = "desc",
+  align = "left",
+  title,
+  className,
+}: {
+  label: React.ReactNode;
+  sortKey: K;
+  activeKey: K;
+  dir: SortDir;
+  onSort: (key: K, defaultDir: SortDir) => void;
+  defaultDir?: SortDir;
+  align?: "left" | "right" | "center";
+  title?: string;
+  className?: string;
+}) {
+  const active = activeKey === sortKey;
+  const Icon = !active ? ChevronsUpDown : dir === "asc" ? ChevronUp : ChevronDown;
+
+  return (
+    <th
+      aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
+      className={cn(
+        "p-0 font-medium",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+        className,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey, defaultDir)}
+        title={title ?? "Bấm để sắp xếp"}
+        className={cn(
+          "flex w-full items-center gap-1 px-2.5 py-2.5 transition hover:text-foreground",
+          active && "text-primary",
+          align === "right" && "flex-row-reverse",
+          align === "center" && "justify-center",
+        )}
+      >
+        <span>{label}</span>
+        <Icon
+          className={cn(
+            "h-3 w-3 shrink-0",
+            active ? "opacity-100" : "opacity-30",
+          )}
+        />
+      </button>
+    </th>
+  );
 }

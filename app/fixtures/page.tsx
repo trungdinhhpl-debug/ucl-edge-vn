@@ -12,29 +12,48 @@ import {
   ErrorBox,
   SectionTitle,
   Select,
+  SortableTh,
   Spinner,
 } from "@/components/ui";
-import { useDataset } from "@/lib/data";
+import { useDataset, type Team } from "@/lib/data";
 import { fmtVN, num } from "@/lib/format";
+import { compare, useSort } from "@/lib/sort";
 
 type View = "atk" | "def";
+type SortKey = "team" | "power" | "avg" | `md${number}`;
+
+/** Độ khó của một đội ở đúng một lượt, theo góc nhìn đang chọn. */
+function diffAt(team: Team, md: number, view: View): number | null {
+  const f = team.fixtures.find((x) => x.md === md);
+  if (!f) return null;
+  return view === "atk" ? f.atkDifficulty : f.defDifficulty;
+}
+
+/** Độ khó trung bình của các lượt còn lại. */
+function avgDiff(team: Team, view: View, fromMd: number): number | null {
+  const fs = team.fixtures.filter((f) => f.md >= fromMd);
+  if (fs.length === 0) return null;
+  const sum = fs.reduce((acc, f) => acc + (view === "atk" ? f.atkDifficulty : f.defDifficulty), 0);
+  return sum / fs.length;
+}
 
 export default function FixturesPage() {
   const { data, error, loading } = useDataset();
   const [view, setView] = useState<View>("atk");
   const [md, setMd] = useState<number | null>(null);
+  const sort = useSort<SortKey>("avg", "asc");
 
   const teams = useMemo(() => {
     if (!data) return [];
-    const key = (t: (typeof data.teams)[number]) => {
-      const fs = t.fixtures.filter((f) => f.md >= data.meta.currentMd);
-      if (fs.length === 0) return 0;
-      return view === "atk"
-        ? fs.reduce((s, f) => s + f.atkDifficulty, 0) / fs.length
-        : fs.reduce((s, f) => s + f.defDifficulty, 0) / fs.length;
+    const from = data.meta.currentMd;
+    const value = (t: Team): number | string | null => {
+      if (sort.key === "team") return t.name;
+      if (sort.key === "power") return t.power;
+      if (sort.key === "avg") return avgDiff(t, view, from);
+      return diffAt(t, Number(sort.key.slice(2)), view);
     };
-    return [...data.teams].sort((a, b) => key(a) - key(b));
-  }, [data, view]);
+    return [...data.teams].sort((a, b) => compare(value(a), value(b), sort.dir));
+  }, [data, view, sort.key, sort.dir]);
 
   if (loading) return <Spinner />;
   if (error) return <ErrorBox error={error} />;
@@ -73,12 +92,46 @@ export default function FixturesPage() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
               <tr>
-                <th className="sticky left-0 bg-muted/40 p-2.5 font-medium">CLB</th>
-                <th className="p-2.5 text-right font-medium">Sức mạnh</th>
+                <SortableTh
+                  label="CLB"
+                  sortKey="team"
+                  activeKey={sort.key}
+                  dir={sort.dir}
+                  onSort={sort.toggle}
+                  defaultDir="asc"
+                  className="sticky left-0 bg-muted/40"
+                />
+                <SortableTh
+                  label="Sức mạnh"
+                  sortKey="power"
+                  activeKey={sort.key}
+                  dir={sort.dir}
+                  onSort={sort.toggle}
+                  align="right"
+                  title="Điểm sức mạnh tổng hợp của CLB"
+                />
+                <SortableTh
+                  label="TB"
+                  sortKey="avg"
+                  activeKey={sort.key}
+                  dir={sort.dir}
+                  onSort={sort.toggle}
+                  defaultDir="asc"
+                  align="right"
+                  title="Độ khó trung bình các lượt còn lại — càng thấp càng thuận lợi"
+                />
                 {mds.map((m) => (
-                  <th key={m} className="p-2.5 text-center font-medium">
-                    L{m}
-                  </th>
+                  <SortableTh
+                    key={m}
+                    label={`L${m}`}
+                    sortKey={`md${m}` as SortKey}
+                    activeKey={sort.key}
+                    dir={sort.dir}
+                    onSort={sort.toggle}
+                    defaultDir="asc"
+                    align="center"
+                    title={`Sắp theo độ khó lượt ${m}`}
+                  />
                 ))}
               </tr>
             </thead>
@@ -94,6 +147,12 @@ export default function FixturesPage() {
                   </td>
                   <td className="p-2.5 text-right tabular-nums text-xs">
                     {num(t.power, 2)}
+                  </td>
+                  <td className="p-2.5 text-right tabular-nums text-xs">
+                    {(() => {
+                      const a = avgDiff(t, view, meta.currentMd);
+                      return a === null ? "—" : num(a, 1);
+                    })()}
                   </td>
                   {mds.map((m) => {
                     const f = t.fixtures.find((x) => x.md === m);
