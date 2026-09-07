@@ -96,12 +96,35 @@ python -m pipeline.tests.test_xp
 
 ---
 
-## Triển khai
+## Triển khai (GitHub + Vercel)
 
-Frontend là ứng dụng Next.js tĩnh — trỏ thư mục gốc dự án của Vercel vào `frontend/` là
-xong. Dữ liệu được làm mới bằng GitHub Actions
-([.github/workflows/refresh-data.yml](.github/workflows/refresh-data.yml)) chạy 4 lần mỗi
-ngày, commit thẳng JSON mới vào repo và kích hoạt deploy lại.
+1. Tạo repo rỗng `ucl-edge-vn` trên GitHub (**không** thêm README/.gitignore), rồi:
+
+   ```bash
+   git push -u origin main
+   ```
+
+2. Vào <https://vercel.com/new>, chọn repo vừa tạo. Chỉ có **một** thiết lập bắt buộc:
+
+   | Thiết lập | Giá trị |
+   |---|---|
+   | **Root Directory** | `frontend` |
+   | Framework | Next.js (tự nhận) |
+   | Build / Install command | để mặc định |
+
+   Ứng dụng Next.js nằm trong thư mục con nên nếu bỏ qua bước Root Directory, Vercel sẽ
+   báo không tìm thấy `package.json`.
+
+3. Bật quyền ghi cho GitHub Actions: **Settings → Actions → General → Workflow
+   permissions → Read and write permissions**. Repo mới mặc định chỉ cho đọc, khi đó
+   cron làm mới dữ liệu sẽ chạy nhưng **không đẩy được commit lên** và im lặng thất bại
+   ở bước cuối.
+
+Sau đó mỗi lần cron ([.github/workflows/refresh-data.yml](.github/workflows/refresh-data.yml))
+chạy, nó commit JSON mới vào `frontend/public/data` và Vercel tự deploy lại.
+
+> Feed thô trong `data/raw/` **không** được đưa vào git (2,4 MB mỗi lần chạy). Muốn dựng
+> lại dữ liệu offline thì chạy `python -m pipeline.run` để tải mới.
 
 ---
 
