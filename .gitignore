@@ -16,3 +16,7 @@ tsconfig.tsbuildinfo
 # Feed thô tải về chỉ để chạy lại offline — không đưa vào git, mỗi lần cron chạy
 # sẽ thêm vài MB vào lịch sử repo mà không đem lại giá trị gì.
 data/raw/
+
+# Vercel CLI (do `vercel link` thêm vào): thư mục nối project và tệp env tải về
+.vercel
+.env*
