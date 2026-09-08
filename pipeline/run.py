@@ -16,6 +16,7 @@ from .ucl import fetch
 def main() -> int:
     ap = argparse.ArgumentParser(description="Dựng dữ liệu UCL Edge VN")
     ap.add_argument("--cached", action="store_true", help="dùng feed đã tải sẵn")
+    ap.add_argument("--no-odds", action="store_true", help="bỏ qua kèo nhà cái")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -27,7 +28,7 @@ def main() -> int:
         raw = fetch.fetch_all()
 
     print("• Dựng mô hình & tính xP …")
-    stats = build_mod.build(raw)
+    stats = build_mod.build(raw, with_odds=not args.no_odds)
 
     print(
         f"✓ Xong sau {time.time() - t0:.1f}s — "

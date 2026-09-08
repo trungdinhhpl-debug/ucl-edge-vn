@@ -80,6 +80,23 @@ export interface Team {
   fixtures: TeamFixture[];
 }
 
+export interface MatchOdds {
+  pHome: number;
+  pDraw: number;
+  pAway: number;
+  handicapLine: number | null;
+  handicapPriceHome: number | null;
+  totalLine: number | null;
+  totalOverPrice: number | null;
+  lamHome: number;
+  lamAway: number;
+  csHome: number;
+  csAway: number;
+  margin: number;
+  fitError: number;
+  marketsUsed: number;
+}
+
 export interface Meta {
   generatedAt: string;
   season: string;
@@ -96,6 +113,7 @@ export interface Meta {
       away: number;
       lambdaHome: number;
       lambdaAway: number;
+      odds?: MatchOdds;
     }[];
   }[];
   rules: {
@@ -107,6 +125,13 @@ export interface Meta {
     unlimitedTransferMds: number[];
     formations: { id: number; gk: number; def: number; mid: number; fwd: number }[];
     scoring: Record<string, unknown>;
+  };
+  odds: {
+    source: string;
+    available: boolean;
+    matches: number;
+    error: string | null;
+    note: string;
   };
   dataQuality: {
     players: number;

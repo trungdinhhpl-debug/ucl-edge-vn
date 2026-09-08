@@ -38,7 +38,7 @@ lệ sở hữu là bằng chứng cầu thủ hay, không khẳng định chắ
 | **Chip** | Wildcard và Limitless đáng bao nhiêu điểm ở từng lượt, kèm đội hình trong mơ khi bỏ trần ngân sách |
 | **Cầu thủ** | Bảng tra cứu 1.162 cầu thủ, lọc theo vị trí/CLB/giá/số phút; bấm vào để xem phân rã xP và số liệu nền |
 | **Đội trưởng** | Xếp hạng theo điểm kỳ vọng / trần điểm / sàn điểm, kèm P(≥6), P(≥10), P(tịt ngòi) |
-| **Lịch thi đấu** | Ma trận độ khó 8 lượt vòng bảng, tách riêng độ khó tấn công và phòng ngự; λ của từng trận |
+| **Lịch thi đấu** | Ma trận độ khó 8 lượt (bấm tiêu đề cột để sắp xếp), và **phân tích kèo nhà cái**: 1X2 đã bỏ hoa hồng, kèo chấp, tài xỉu, sạch lưới theo thị trường, và mức lệch giữa mô hình với thị trường |
 | **Phương pháp** | Toàn bộ công thức, bảng điểm chính thức, và danh sách giới hạn của mô hình |
 
 ---
@@ -134,6 +134,10 @@ chạy, nó commit JSON mới vào `public/data` và Vercel tự deploy lại.
   được dựng từ giá + nhóm hạt giống + hệ số CLB, không phải từ bàn thắng mùa trước.
 - **Trước lượt 1, feed phát số liệu của mùa 2025/26.** Giống bẫy tiền mùa giải của FPL:
   con số trông như "mùa này" nhưng thực ra là mùa trước.
+- **Tên đội của nhà cái khác tên của UEFA.** 14/36 đội không tự khớp được ("Manchester
+  City" vs "Man City", "Bodo Glimt" vs "Bodø/Glimt"). Bảng `NAME_ALIASES` trong
+  `pipeline/ucl/odds.py` xử lý phần này, và pipeline **báo lỗi to** nếu có đội không khớp
+  — thà hỏng thấy được còn hơn âm thầm mất kèo của một trận.
 
 ## Nguồn dữ liệu
 
@@ -145,5 +149,6 @@ chạy, nó commit JSON mới vào `public/data` và Vercel tự deploy lại.
 | `gaming.uefa.com/.../feeds/constraints` | ngân sách, giới hạn cầu thủ/CLB, lượt hiện tại |
 | `gaming.uefa.com/.../feeds/compositions` | các sơ đồ hợp lệ |
 | `comp.uefa.com/v2/coefficients` | hệ số CLB châu Âu 5 năm (20 đội đứng đầu) |
+| `guest.api.arcadia.pinnacle.com` | kèo 1X2, kèo chấp, tài xỉu, tài xỉu từng đội |
 
 Bảng điểm được lấy trực tiếp từ mã nguồn trang chủ game, không chép tay.

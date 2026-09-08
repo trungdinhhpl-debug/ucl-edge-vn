@@ -148,6 +148,44 @@ export default function MethodologyPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Kèo nhà cái được xử lý thế nào</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Nguồn: {meta.odds.source}. Kèo <em>không</em> được dùng để sửa xP — nó là thước
+            đo độc lập để bạn biết chỗ nào mô hình đáng ngờ.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <Bullet>
+            Giá Mỹ được đổi sang xác suất ngầm, rồi <strong className="text-foreground">bỏ
+            hoa hồng nhà cái</strong> bằng cách chia lại theo tỷ lệ. Không làm bước này thì
+            ba cửa 1X2 cộng lại thành 104% chứ không phải 100%.
+          </Bullet>
+          <Bullet>
+            Số bàn kỳ vọng của thị trường được suy ra bằng cách khớp một mô hình Poisson vào{" "}
+            <em>toàn bộ</em> kèo của trận đó cùng lúc — 1X2, tài xỉu và tài xỉu từng đội —
+            chứ không đọc thẳng từ một vạch kèo duy nhất. Kèo nào nhà cái nhận cược lớn hơn
+            thì được cho trọng số cao hơn, vì giá đó sắc hơn.
+          </Bullet>
+          <Bullet>
+            Xác suất giữ sạch lưới theo thị trường là exp(−λ đối thủ) — cùng công thức mà
+            mô hình dùng, nên hai con số so sánh được trực tiếp.
+          </Bullet>
+          <Bullet>
+            Chọn Pinnacle vì họ có biên lợi nhuận mỏng nhất và nhận cược lớn, nên giá của họ
+            gần với xác suất thật nhất trong các nhà cái.
+          </Bullet>
+          <Bullet>
+            Nhà cái chỉ mở kèo cho lượt đấu sắp tới, nên các lượt sau chưa có gì để so.
+          </Bullet>
+          <Bullet>
+            Kèo là phần bổ sung: nếu không lấy được, toàn bộ trang vẫn dựng bình thường và
+            lý do thất bại được ghi lại trong dữ liệu.
+          </Bullet>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Bảng điểm chính thức của UCL Fantasy</CardTitle>
           <p className="text-xs text-muted-foreground">
             Lấy trực tiếp từ mã nguồn trang gaming.uefa.com, không phải chép tay.
@@ -234,6 +272,11 @@ export default function MethodologyPage() {
           <Bullet>
             Mô hình không thấy trước chấn thương, nên nó luôn định giá Wildcard thấp. Giá
             trị thật của Wildcard nằm ở lúc đội hình vỡ — hãy tự cộng thêm phần đó.
+          </Bullet>
+          <Bullet>
+            Kèo nhà cái phản ánh thông tin mà mô hình không có (đội hình dự kiến, chấn
+            thương, dòng tiền). Khi cột Lệch ở trang Lịch thi đấu lớn, thị trường thường
+            đúng hơn — mô hình không tự động chỉnh theo, bạn phải tự cân nhắc.
           </Bullet>
         </CardContent>
       </Card>

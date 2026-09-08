@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import json
+import math
 import pathlib
 from datetime import datetime, timezone
 
 import numpy as np
 
 from . import config as C
+from .odds import fetch_odds
 from .players import Player, fit_and_apply, parse_players
 from .teams import Team, build_matches, build_teams
 from .xp import Fixture, expected_points, player_distribution
@@ -54,7 +56,52 @@ def _bucket(x: float, lo: float, hi: float) -> int:
     return int(min(5, max(1, np.floor(t * 5) + 1)))
 
 
-def build(raw: dict, out_dir: pathlib.Path | None = None) -> dict:
+def _attach_odds(teams, matchdays: dict[int, dict], with_odds: bool) -> dict:
+    """Gắn kèo nhà cái vào từng trận. Kèo là phần bổ sung, hỏng thì cả pipeline vẫn chạy."""
+    info = {"available": False, "matches": 0, "error": None}
+    if not with_odds:
+        info["error"] = "bỏ qua theo yêu cầu"
+        return info
+
+    try:
+        book = fetch_odds(teams)
+    except Exception as exc:  # noqa: BLE001 - mất kèo thì trang vẫn phải dựng được
+        info["error"] = str(exc)[:300]
+        print(f"  ! không lấy được kèo nhà cái: {exc}")
+        return info
+
+    n = 0
+    for md in matchdays.values():
+        for m in md["matches"]:
+            k = book.get((m["home"], m["away"]))
+            if not k:
+                continue
+            m["odds"] = {
+                "pHome": _round(k.p_home, 4),
+                "pDraw": _round(k.p_draw, 4),
+                "pAway": _round(k.p_away, 4),
+                "handicapLine": k.handicap_line,
+                "handicapPriceHome": k.handicap_price_home,
+                "totalLine": k.total_line,
+                "totalOverPrice": k.total_over_price,
+                "lamHome": _round(k.lam_home, 2),
+                "lamAway": _round(k.lam_away, 2),
+                # sạch lưới theo thị trường = xác suất đối thủ không ghi bàn nào
+                "csHome": _round(math.exp(-k.lam_away), 4),
+                "csAway": _round(math.exp(-k.lam_home), 4),
+                "margin": _round(k.raw_margin, 4),
+                "fitError": _round(k.fit_error, 6),
+                "marketsUsed": k.markets_used,
+            }
+            n += 1
+
+    info["available"] = n > 0
+    info["matches"] = n
+    print(f"  ✓ kèo nhà cái: {n} trận")
+    return info
+
+
+def build(raw: dict, out_dir: pathlib.Path | None = None, with_odds: bool = True) -> dict:
     out_dir = out_dir or OUT_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,6 +113,7 @@ def build(raw: dict, out_dir: pathlib.Path | None = None) -> dict:
     constraints = raw["constraints"]["data"]["value"]
     current_md = int(constraints.get("matchdayId") or 1)
     motm = _motm_normaliser(players, matchdays)
+    odds_info = _attach_odds(teams, matchdays, with_odds)
 
     # ---------------------------------------------------------- thang độ khó
     lam_for_all = [f["lam_for"] for t in teams.values() for f in t.fixtures.values()]
@@ -239,6 +287,16 @@ def build(raw: dict, out_dir: pathlib.Path | None = None) -> dict:
                 "redCard": C.RED_CARD,
                 "ownGoal": C.OWN_GOAL,
             },
+        },
+        "odds": {
+            "source": "Pinnacle (guest API)",
+            "available": odds_info["available"],
+            "matches": odds_info["matches"],
+            "error": odds_info["error"],
+            "note": (
+                "Xác suất đã bỏ hoa hồng nhà cái. Bàn thắng kỳ vọng của thị trường suy ra "
+                "bằng cách khớp mô hình Poisson vào toàn bộ các kèo của trận đó."
+            ),
         },
         "dataQuality": {
             "players": len(players),
